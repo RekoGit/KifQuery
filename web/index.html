@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>将棋盤（座標付き）</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link href="KifPlayer/css/shogistyle.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body id="main-body">
+  <div class="container">
+    <!-- 左側の（後手）駒置き場 -->
+    <div class="piece-palette" id="left-palette">
+      <div class="piece rotate-180" draggable="true" data-piece="歩" data-sfen="p">歩</div>
+      <div class="piece rotate-180" draggable="true" data-piece="香" data-sfen="l">香</div>
+      <div class="piece rotate-180" draggable="true" data-piece="桂" data-sfen="n">桂</div>
+      <div class="piece rotate-180" draggable="true" data-piece="銀" data-sfen="s">銀</div>
+      <div class="piece rotate-180" draggable="true" data-piece="金" data-sfen="g">金</div>
+      <div class="piece rotate-180" draggable="true" data-piece="角" data-sfen="b">角</div>
+      <div class="piece rotate-180" draggable="true" data-piece="飛" data-sfen="r">飛</div>
+      <div class="piece rotate-180" draggable="true" data-piece="王" data-sfen="k">王</div>
+    </div>
+
+    <!-- 将棋盤＋座標ラベル -->
+    <div class="board-wrapper">
+      <div class="board-header">
+        <div class="labels horizontal">
+          <div>9</div>
+          <div>8</div>
+          <div>7</div>
+          <div>6</div>
+          <div>5</div>
+          <div>4</div>
+          <div>3</div>
+          <div>2</div>
+          <div>1</div>
+        </div>
+      </div>
+      <div class="board-body">
+        <div class="condition-board" id="condition-board"></div>
+        <div class="labels vertical">
+          <div>一</div>
+          <div>二</div>
+          <div>三</div>
+          <div>四</div>
+          <div>五</div>
+          <div>六</div>
+          <div>七</div>
+          <div>八</div>
+          <div>九</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右側の（先手）駒置き場 -->
+    <div class="piece-palette" id="right-palette">
+      <div class="piece" draggable="true" data-piece="歩" data-sfen="P">歩</div>
+      <div class="piece" draggable="true" data-piece="香" data-sfen="L">香</div>
+      <div class="piece" draggable="true" data-piece="桂" data-sfen="N">桂</div>
+      <div class="piece" draggable="true" data-piece="銀" data-sfen="S">銀</div>
+      <div class="piece" draggable="true" data-piece="金" data-sfen="G">金</div>
+      <div class="piece" draggable="true" data-piece="角" data-sfen="B">角</div>
+      <div class="piece" draggable="true" data-piece="飛" data-sfen="R">飛</div>
+      <div class="piece" draggable="true" data-piece="王" data-sfen="K">王</div>
+    </div>
+  </div>
+
+  <div class="container">
+
+
+    <div id="search-display" class="search-display">
+      <button onclick="searchKifGames()">この内容で検索する</button>
+      <table id="result-table" border="1">
+        <thead>
+          <tr>
+            <th>手数</th>
+            <th>勝敗</th>
+            <th>対局開始日時</th>
+            <th>リンク</th>
+          </tr>
+        </thead>
+        <tbody id="result-body">
+          <!-- JSでここに結果が追加されます -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div id="preview-boards" class="container">
+    <div>
+      <input type="file" id="kif-input-01" accept=".kif" />
+      <iframe id="preview-board-01" width="100%" height="500"></iframe>
+    </div>
+    <div>
+      <input type="file" id="kif-input-02" accept=".kif" />
+      <iframe id="preview-board-02" width="100%" height="500"></iframe>
+    </div>
+    <div>
+      <input type="file" id="kif-input-03" accept=".kif" />
+      <iframe id="preview-board-03" width="100%" height="500"></iframe>
+    </div>
+
+  </div>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="./KifPlayer/js/kifPlayer.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.4.1/snap.svg.js"></script>
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
