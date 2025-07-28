@@ -10,7 +10,6 @@ use std::fs;
 pub fn import_kif_file(
     conn: &mut PooledConn,
     filepath: &str,
-    my_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let (contents, filename) = parser::read_kif_file(filepath)?;
     let header = parser::parse_header_and_result(&contents, &filename);
@@ -48,7 +47,7 @@ pub fn import_kif_file(
     Ok(())
 }
 
-pub fn import_all_kif_files(my_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn import_all_kif_files() -> Result<(), Box<dyn std::error::Error>> {
     let paths = fs::read_dir(KIF_DIR.as_path())?;
     let mut conn = db::get_conn()?;
 
@@ -62,7 +61,7 @@ pub fn import_all_kif_files(my_name: &str) -> Result<(), Box<dyn std::error::Err
 
         println!("\n=== 処理中: {} ===", path.to_string_lossy());
 
-        if let Err(e) = import_kif_file(&mut conn, path.to_str().unwrap(), "Ringosky") {
+        if let Err(e) = import_kif_file(&mut conn, path.to_str().unwrap()) {
             eprintln!("棋譜取り込み失敗: {}", e);
         }
     }

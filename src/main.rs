@@ -27,9 +27,7 @@ async fn main() {
 
 // ハンドラ関数
 async fn import_all_handler() -> &'static str {
-    let my_name = "Ringosky";
-
-    match import::import_all_kif_files(my_name) {
+    match import::import_all_kif_files() {
         Ok(_) => "全ての棋譜ファイルをインポートしました",
         Err(e) => {
             eprintln!("エラー: {}", e);
