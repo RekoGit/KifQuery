@@ -159,13 +159,24 @@ async function searchKifGames() {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
+
     reader.onload = function (e) {
-      const kifText = e.target.result;
-      embedKifuInIframe(kifText, id);
+      const arrayBuffer = e.target.result;
+      const bytes = new Uint8Array(arrayBuffer);
+      const detectedEncoding = Encoding.detect(bytes); // 文字コード自動判別
+      const decodedText = Encoding.convert(bytes, {
+        to: "UNICODE", // UTF-16（JavaScript内部文字列）
+        from: detectedEncoding,
+        type: "string"
+      });
+
+      embedKifuInIframe(decodedText, id);
     };
-    reader.readAsText(file, "sjis");
+
+    reader.readAsArrayBuffer(file); // バイナリとして読み込む
   });
 });
+
 
 function embedKifuInIframe(kifText, boardId) {
   const iframe = document.getElementById("preview-board-" + boardId);
