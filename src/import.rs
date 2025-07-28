@@ -27,12 +27,6 @@ pub fn import_kif_file(
             break;
         }
 
-        println!(
-            "変換前：{}  変換後：{}",
-            m.fugo,
-            prev_fugo.as_deref().unwrap_or("None")
-        );
-
         let normalized_fugo = parser::normalize_fugo(&m.fugo, prev_fugo.as_deref());
         board.apply_move(&normalized_fugo, m.te % 2 == 1)?;
         prev_fugo = Some(normalized_fugo.clone());
