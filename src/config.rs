@@ -1,4 +1,5 @@
 use dotenvy::dotenv;
+use lazy_static::lazy_static;
 use once_cell::sync::Lazy;
 use std::env;
 use std::path::PathBuf;
@@ -8,9 +9,9 @@ static _INIT: Lazy<()> = Lazy::new(|| {
     dotenv().ok(); // .env を読み込む
 });
 
-// 既存の KIF_DIR 定義例
+// 既存の KIF_DIR
 pub static KIF_DIR: Lazy<PathBuf> = Lazy::new(|| {
-    once_cell::sync::Lazy::force(&_INIT); // ← 修正ポイント
+    once_cell::sync::Lazy::force(&_INIT);
     PathBuf::from(env::var("KIF_DIR").unwrap_or_else(|_| "../kif".to_string()))
 });
 
@@ -24,7 +25,14 @@ pub static COLLECTED_DIR: Lazy<PathBuf> = Lazy::new(|| {
     PathBuf::from(val)
 });
 
-pub static MY_USERNAME_WARS: Lazy<String> = Lazy::new(|| {
-    once_cell::sync::Lazy::force(&_INIT);
-    env::var("MY_USERNAME_WARS").unwrap_or_else(|_| "UnknownUser".to_string())
-});
+// pub static MY_USERNAME_WARS: Lazy<String> = Lazy::new(|| {
+//     once_cell::sync::Lazy::force(&_INIT);
+//     env::var("MY_USERNAME_WARS").unwrap_or_else(|_| "UnknownUser".to_string())
+// });
+lazy_static! {
+    pub static ref MY_USERNAMES: Vec<String> = std::env::var("MY_USERNAMES")
+        .unwrap_or_default()
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .collect();
+}

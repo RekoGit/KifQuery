@@ -1,4 +1,4 @@
-use crate::config::{COLLECTED_DIR, IMPORTED_DIR, MY_USERNAME_WARS};
+use crate::config::{COLLECTED_DIR, IMPORTED_DIR, MY_USERNAMES};
 use crate::db;
 use axum::http::StatusCode;
 use mysql::prelude::Queryable;
@@ -57,8 +57,17 @@ pub async fn search_games(
         where_clauses.push(format!("{} = ? COLLATE utf8mb4_bin", col_name));
         params.push(cond.sfen.clone().into());
     }
-    where_clauses.push("h.sente_player = ?".to_string());
-    params.push(MY_USERNAME_WARS.to_string().into());
+    // where_clauses.push("h.sente_player = ?".to_string());
+    // params.push(MY_USERNAME_WARS.to_string().into());
+    where_clauses.push(format!(
+        "h.sente_player IN ({})",
+        MY_USERNAMES
+            .iter()
+            .map(|_| "?")
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    params.extend(MY_USERNAMES.iter().cloned().map(Value::from));
 
     let where_sql = if where_clauses.is_empty() {
         "1".to_string()
@@ -110,8 +119,17 @@ GROUP BY b.kif_id
         gote_params.push(reversed_sfen.into());
     }
 
-    gote_where_clauses.push("h.gote_player = ?".to_string());
-    gote_params.push(MY_USERNAME_WARS.to_string().into());
+    // gote_where_clauses.push("h.gote_player = ?".to_string());
+    // gote_params.push(MY_USERNAME_WARS.to_string().into());
+    gote_where_clauses.push(format!(
+        "h.gote_player IN ({})",
+        MY_USERNAMES
+            .iter()
+            .map(|_| "?")
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    gote_params.extend(MY_USERNAMES.iter().cloned().map(Value::from));
 
     let gote_where_sql = if gote_where_clauses.is_empty() {
         "1".to_string()

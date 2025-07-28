@@ -10,6 +10,7 @@ dependencies = [
  "chrono",
  "dotenvy",
  "encoding_rs",
+ "lazy_static",
  "mysql",
  "once_cell",
  "regex",
