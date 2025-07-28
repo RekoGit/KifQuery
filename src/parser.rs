@@ -129,3 +129,57 @@ pub fn parse_kif_moves(lines: &[String]) -> Vec<Move> {
 
     moves
 }
+
+pub fn normalize_fugo(fugo: &str, prev_fugo: Option<&str>) -> String {
+    use regex::Regex;
+    let fugo = fugo.replace(['\u{3000}', ' '], ""); // スペース削除
+
+    if fugo.starts_with("同") {
+        if let Some(prev) = prev_fugo {
+            let re =
+                Regex::new(r"(?P<to_file>[１２３４５６７８９])(?P<to_rank>[一二三四五六七八九])")
+                    .unwrap();
+            if let Some(caps) = re.captures(prev) {
+                let file = caps.name("to_file").unwrap().as_str();
+                let rank = caps.name("to_rank").unwrap().as_str();
+                // 置換: "同　銀(48)" → "３七銀(48)" など
+                return fugo.replacen("同", &format!("{}{}", file, rank), 1);
+            }
+        }
+    }
+    fugo.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_normalize_fugo_with_doh_doublebyte() {
+        let prev = "３七歩成(36)";
+        let current = "同　銀(48)";
+        let expected = "３七銀(48)";
+        assert_eq!(normalize_fugo(current, Some(prev)), expected);
+    }
+
+    #[test]
+    fn test_normalize_fugo_with_doh_singlebyte() {
+        let prev = "３七歩成(36)";
+        let current = "同 銀(48)";
+        let expected = "３七銀(48)";
+        assert_eq!(normalize_fugo(current, Some(prev)), expected);
+    }
+
+    #[test]
+    fn test_normalize_fugo_without_doh() {
+        let prev = "３七歩(36)";
+        let current = "４八銀(39)";
+        assert_eq!(normalize_fugo(current, Some(prev)), "４八銀(39)");
+    }
+
+    #[test]
+    fn test_normalize_fugo_without_prev_fugo() {
+        let current = "同　銀(48)";
+        assert_eq!(normalize_fugo(current, None), "同銀(48)");
+    }
+}

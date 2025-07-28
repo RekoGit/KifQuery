@@ -19,12 +19,24 @@ pub fn import_kif_file(
     let mut board = Board::new();
     let kif_id = db::insert_kif_header(conn, &header)?;
 
+    let mut prev_fugo: Option<String> = None;
+
     for m in &moves {
         // 投了などの終局を検出してループ終了
         if m.fugo.contains("投了") {
             break;
         }
-        board.apply_move(&m.fugo, m.te % 2 == 1)?;
+
+        println!(
+            "変換前：{}  変換後：{}",
+            m.fugo,
+            prev_fugo.as_deref().unwrap_or("None")
+        );
+
+        let normalized_fugo = parser::normalize_fugo(&m.fugo, prev_fugo.as_deref());
+        board.apply_move(&normalized_fugo, m.te % 2 == 1)?;
+        prev_fugo = Some(normalized_fugo.clone());
+
         let body = KifBody {
             kif_id: kif_id as i32,
             te: m.te as i32,
