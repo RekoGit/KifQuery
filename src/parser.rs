@@ -10,7 +10,7 @@ pub struct Move {
     pub fugo: String, // ７六歩(77) など
 }
 
-pub fn parse_header_and_result(kif_text: &str, my_username: &str, filename: &str) -> KifHeader {
+pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
     use chrono::Local;
 
     let mut sente_player = String::new();
@@ -34,31 +34,28 @@ pub fn parse_header_and_result(kif_text: &str, my_username: &str, filename: &str
         }
     }
 
-    // 自分が先手か後手か
-    let is_me_sente = sente_player == my_username;
-
     // 終局情報の検出
     let last_move_num: Option<u32> = None;
-    let mut is_my_loss = false;
+    let mut is_sente_win = true;
 
     for line in kif_text.lines().rev() {
         if line.starts_with('*') {
             if line.contains("反則手") || line.contains("時間切れ") {
                 if let Some(num) = last_move_num {
-                    is_my_loss = (num % 2 == 0) == is_me_sente;
+                    // 偶数手で反則等があれば、先手の勝ち
+                    is_sente_win = num % 2 == 0;
                 }
             }
         } else if let Some((num_str, rest)) = line.trim().split_once(char::is_whitespace) {
             if let Ok(num) = num_str.parse::<u32>() {
                 if rest.contains("投了") {
-                    is_my_loss = (num % 2 == 1) == is_me_sente;
+                    // 偶数手で投了なら、先手の勝ち
+                    is_sente_win = num % 2 == 0;
                 }
                 break;
             }
         }
     }
-
-    let is_sente_win = if is_me_sente { !is_my_loss } else { is_my_loss };
 
     KifHeader {
         kif_filename: filename.to_string(),
@@ -68,7 +65,7 @@ pub fn parse_header_and_result(kif_text: &str, my_username: &str, filename: &str
         started_at,
         ended_at,
         created_at: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-        created_by: my_username.to_string(),
+        created_by: "system".to_string(),
     }
 }
 
