@@ -4,7 +4,7 @@ use crate::models::KifBody;
 use crate::{db, parser};
 use mysql::PooledConn;
 
-use crate::config::KIF_DIR;
+use crate::config::KIF_PATH;
 use std::fs;
 
 pub fn import_kif_file(
@@ -54,7 +54,7 @@ pub fn import_kif_file(
 }
 
 pub fn import_all_kif_files() -> Result<(), Box<dyn std::error::Error>> {
-    let paths = fs::read_dir(KIF_DIR.as_path())?;
+    let paths = fs::read_dir(KIF_PATH.as_path())?;
     let mut conn = db::get_conn()?;
 
     for entry in paths {
