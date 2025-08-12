@@ -154,17 +154,17 @@ GROUP BY b.kif_id
         .exec(gote_sql, gote_params)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
+    // 検索件数をprint
+    println!(
+        "先手検索結果: {}件, 後手検索結果: {}件",
+        rows.len(),
+        gote_rows.len()
+    );
+
     // 先手 + 後手の一致ファイルをコピー
     for (filename, te, is_win, started_at, is_sente) in rows.into_iter().chain(gote_rows) {
         let src = IMPORTED_DIR.join(&filename);
         let dst = COLLECTED_DIR.join(&filename);
-
-        fs::copy(&src, &dst).map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("コピー失敗: {} → {}: {}", src.display(), dst.display(), e),
-            )
-        })?;
 
         links.push(KifLink {
             link: format!("{}/{}", IMPORTED_DIR.display(), filename),
@@ -173,6 +173,19 @@ GROUP BY b.kif_id
             started_at,
             is_sente,
         });
+
+        // ファイルが存在しない場合はスキップ
+        if !src.exists() {
+            println!("ファイルが存在しません: {}", src.display());
+            continue;
+        }
+
+        fs::copy(&src, &dst).map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("コピー失敗: {} → {}: {}", src.display(), dst.display(), e),
+            )
+        })?;
     }
 
     // started_at の降順でソート
