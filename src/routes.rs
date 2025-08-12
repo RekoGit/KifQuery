@@ -22,6 +22,7 @@ pub struct KifLink {
     pub te: i32,            // ← 何手目（ヒットした局面の手数）
     pub is_win: bool,       // 自分が勝ったかどうか
     pub started_at: String, // 対局開始日時（例: "2025-07-10 14:00:00"）
+    pub is_sente: bool,     // 先手か後手か（true: 先手, false: 後手）
 }
 
 pub async fn search_games(
@@ -77,7 +78,7 @@ pub async fn search_games(
 
     let sql = format!(
         r#"
-SELECT h.kif_filename, MIN(b.te) as min_te, h.is_sente_win as is_win, DATE_FORMAT(h.started_at, '%Y-%m-%d %H:%i:%s') AS started_at
+SELECT h.kif_filename, MIN(b.te) as min_te, h.is_sente_win as is_win, DATE_FORMAT(h.started_at, '%Y-%m-%d %H:%i:%s') AS started_at, 1 as sengo 
 FROM kif_bodies b
 LEFT JOIN kif_headers h ON b.kif_id = h.id
 WHERE {}
@@ -86,7 +87,7 @@ GROUP BY b.kif_id
         where_sql
     );
 
-    let rows: Vec<(String, i32, bool, String)> = conn
+    let rows: Vec<(String, i32, bool, String, bool)> = conn
         // let rows: Vec<(String, i32)> = conn
         .exec(sql, params)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -139,7 +140,7 @@ GROUP BY b.kif_id
 
     let gote_sql = format!(
         r#"
-SELECT h.kif_filename, MIN(b.te) as min_te, NOT h.is_sente_win as is_win, DATE_FORMAT(h.started_at, '%Y-%m-%d %H:%i:%s') AS started_at
+SELECT h.kif_filename, MIN(b.te) as min_te, NOT h.is_sente_win as is_win, DATE_FORMAT(h.started_at, '%Y-%m-%d %H:%i:%s') AS started_at, 0 as sengo 
 FROM kif_bodies b
 LEFT JOIN kif_headers h ON b.kif_id = h.id
 WHERE {}
@@ -149,12 +150,12 @@ GROUP BY b.kif_id
     );
     println!("SQL: {}", gote_sql);
 
-    let gote_rows: Vec<(String, i32, bool, String)> = conn
+    let gote_rows: Vec<(String, i32, bool, String, bool)> = conn
         .exec(gote_sql, gote_params)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     // 先手 + 後手の一致ファイルをコピー
-    for (filename, te, is_win, started_at) in rows.into_iter().chain(gote_rows) {
+    for (filename, te, is_win, started_at, is_sente) in rows.into_iter().chain(gote_rows) {
         let src = IMPORTED_DIR.join(&filename);
         let dst = COLLECTED_DIR.join(&filename);
 
@@ -170,6 +171,7 @@ GROUP BY b.kif_id
             te,
             is_win: is_win,
             started_at,
+            is_sente,
         });
     }
 

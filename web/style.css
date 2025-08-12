@@ -95,3 +95,7 @@
   position: relative;
   padding: 3px;
 }
+
+.result-log {
+  white-space: pre-line;
+}

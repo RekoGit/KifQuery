@@ -98,7 +98,9 @@ async function searchKifGames() {
 
     const tbody = document.getElementById("result-body");
     tbody.innerHTML = ""; // 前回の結果をクリア
-    const result_id = 1; // 何番目のresultか
+    var winCount = 0;
+    var senteWinCount = 0;
+    var senteCount = 0;
 
     result.forEach(linkObj => {
       const tr = document.createElement("tr");
@@ -112,10 +114,21 @@ async function searchKifGames() {
       const tdResult = document.createElement("td");
       tdResult.textContent = linkObj.is_win ? "⭕️" : "✖︎";
       tr.appendChild(tdResult);
+      winCount += linkObj.is_win ? 1 : 0;
+
+      // 先手/後手
+      const tdSengo = document.createElement("td");
+      console.log(linkObj.is_sente);
+      tdSengo.textContent = linkObj.is_sente ? "先手" : "後手";
+      tr.appendChild(tdSengo);
+      senteCount += linkObj.is_sente ? 1 : 0;
+      if (linkObj.is_sente && linkObj.is_win) {
+        senteWinCount++;
+      }
 
       // 対局開始日時
       const tdDate = document.createElement("td");
-      tdDate.textContent = linkObj.started_at.substring(0, 16);
+      tdDate.textContent = linkObj.started_at.substring(0, 10);
       tr.appendChild(tdDate);
 
       // リンク
@@ -130,21 +143,22 @@ async function searchKifGames() {
       // 行を tbody に追加
       tbody.appendChild(tr);
 
-      if (result_id <= 3) {
-        // ファイルオブジェクトを取得して自動でiframeに最初の3件は表示するようにしたい
-        // const file = 
-        // if (file) {          
-        // const reader = new FileReader();
-        // reader.onload = function (e) {
-        //   const kifText = e.target.result;
-        //   embedKifuInIframe(kifText, result_id);
-        // };
-        // reader.readAsText(file, "sjis");
-        // result_id++;
-        // }
-      }
-
     });
+
+    // 結果ログに勝率を表示
+    const resultLog = document.getElementById("result-log");
+    const totalGames = result.length;
+    const winRate = totalGames > 0 ? (winCount / totalGames * 100).toFixed(2) : 0;
+
+    // 検索結果: {totalGames} 件
+    // {winCount}勝 {totalGames - winCount}敗 (勝率: {winRate}%)
+    // 改行を有効にする
+
+    resultLog.textContent = `検索結果: ${totalGames} 件
+全て： ${winCount}勝 ${totalGames - winCount}敗 (勝率: ${winRate}%)
+先手： ${senteWinCount}勝 ${senteCount - senteWinCount}敗 (勝率: ${(senteCount > 0 ? (senteWinCount / senteCount * 100).toFixed(2) : 0)}%)
+後手： ${winCount - senteWinCount}勝 ${totalGames - senteCount - (winCount - senteWinCount)}敗 (勝率: ${(totalGames - senteCount > 0 ? ((winCount - senteWinCount) / (totalGames - senteCount) * 100).toFixed(2) : 0)}%)`
+      ;
 
   } catch (error) {
     console.error("検索リクエスト失敗:", error);
