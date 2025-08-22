@@ -35,26 +35,47 @@ pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
     }
 
     // 終局情報の検出
-    let last_move_num: Option<u32> = None;
     let mut is_sente_win = true;
+    let mut prev_line: Option<String> = None;
 
-    for line in kif_text.lines().rev() {
-        if line.starts_with('*') {
-            if line.contains("反則手") || line.contains("時間切れ") {
-                if let Some(num) = last_move_num {
-                    // 偶数手で反則等があれば、先手の勝ち
-                    is_sente_win = num % 2 == 0;
+    // 棋譜が変化を含む場合があるため、先頭から走査して最初に「投了」や「反則手」が出てくる行を探す
+    for line in kif_text.lines() {
+        // 81道場で反則手等で終局している場合、手数が記載されていないためprev_lineから手数を取得する
+        if line.contains("*反則手") || line.contains("*時間切れ") {
+            println!(
+                "反則手や時間切れの直前の行: {}",
+                prev_line.as_deref().unwrap_or("なし")
+            );
+            if let Some(last) = prev_line {
+                if let Some((num_str, _)) = last.trim().split_once(char::is_whitespace) {
+                    if let Ok(num) = num_str.parse::<u32>() {
+                        print!("終局: {} {}手目", line, num);
+                        // 時間切れの場合、直前の行を指した方が勝ち
+                        if line.contains("*時間切れ") {
+                            is_sente_win = num % 2 == 1;
+                        } else {
+                            is_sente_win = num % 2 == 0;
+                        }
+
+                        break;
+                    }
                 }
-            }
-        } else if let Some((num_str, rest)) = line.trim().split_once(char::is_whitespace) {
-            if let Ok(num) = num_str.parse::<u32>() {
-                if rest.contains("投了") {
-                    // 偶数手で投了なら、先手の勝ち
-                    is_sente_win = num % 2 == 0;
-                }
-                break;
             }
         }
+
+        if line.contains("投了") {
+            if let Some((num_str, rest)) = line.trim().split_once(char::is_whitespace) {
+                if let Ok(num) = num_str.parse::<u32>() {
+                    // 偶数手で投了なら、先手の勝ち
+                    print!("投了手: {} ", rest);
+                    is_sente_win = num % 2 == 0;
+                    break;
+                }
+            }
+        }
+
+        // 直前のlineを保管
+        prev_line = Some(line.to_string());
     }
 
     KifHeader {

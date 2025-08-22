@@ -128,7 +128,13 @@ async function searchKifGames() {
 
       // 対局開始日時
       const tdDate = document.createElement("td");
-      tdDate.textContent = linkObj.started_at.substring(0, 10);
+      if (!linkObj.started_at) {
+        tdDate.textContent = "-";
+      } else if (linkObj.started_at.length < 10) {
+        tdDate.textContent = linkObj.started_at; // 日時が短い場合はそのまま表示
+      } else {
+        tdDate.textContent = linkObj.started_at.substring(0, 10);
+      }
       tr.appendChild(tdDate);
 
       // リンク

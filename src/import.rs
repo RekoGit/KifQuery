@@ -13,7 +13,6 @@ pub fn import_kif_file(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let (contents, filename) = parser::read_kif_file(filepath)?;
     let header = parser::parse_header_and_result(&contents, &filename);
-
     let lines: Vec<String> = contents.lines().map(|line| line.to_string()).collect();
     let moves = parser::parse_kif_moves(&lines);
     let mut board = Board::new();

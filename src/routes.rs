@@ -19,10 +19,10 @@ pub struct SearchCondition {
 #[derive(Serialize)]
 pub struct KifLink {
     pub link: String,
-    pub te: i32,            // ← 何手目（ヒットした局面の手数）
-    pub is_win: bool,       // 自分が勝ったかどうか
-    pub started_at: String, // 対局開始日時（例: "2025-07-10 14:00:00"）
-    pub is_sente: bool,     // 先手か後手か（true: 先手, false: 後手）
+    pub te: i32,
+    pub is_win: bool, // 自分が勝ったかどうか
+    pub started_at: Option<String>,
+    pub is_sente: bool,
 }
 
 pub async fn search_games(
@@ -51,15 +51,18 @@ pub async fn search_games(
     let mut where_clauses = Vec::new();
     let mut params: Vec<Value> = Vec::new();
 
+    // 検索条件の数が0の場合は、全対局を取得する
+    println!("検索条件: {}件", conditions.len());
+
     // 先手の場合の処理
+    // 与えられた条件を一旦、where_clausesに格納
     for cond in &conditions {
         let col_name = format!("b.c{}", cond.c); // テーブルエイリアスbを付ける
-        // where_clauses.push(format!("{} = ?", col_name));
         where_clauses.push(format!("{} = ? COLLATE utf8mb4_bin", col_name));
         params.push(cond.sfen.clone().into());
     }
-    // where_clauses.push("h.sente_player = ?".to_string());
-    // params.push(MY_USERNAME_WARS.to_string().into());
+
+    // ユーザー名の条件も一旦、where_clausesに格納
     where_clauses.push(format!(
         "h.sente_player IN ({})",
         MY_USERNAMES
@@ -70,12 +73,6 @@ pub async fn search_games(
     ));
     params.extend(MY_USERNAMES.iter().cloned().map(Value::from));
 
-    let where_sql = if where_clauses.is_empty() {
-        "1".to_string()
-    } else {
-        where_clauses.join(" AND ")
-    };
-
     let sql = format!(
         r#"
 SELECT h.kif_filename, MIN(b.te) as min_te, h.is_sente_win as is_win, DATE_FORMAT(h.started_at, '%Y-%m-%d %H:%i:%s') AS started_at, 1 as sengo 
@@ -84,10 +81,13 @@ LEFT JOIN kif_headers h ON b.kif_id = h.id
 WHERE {}
 GROUP BY b.kif_id
     "#,
-        where_sql
+        where_clauses.join(" AND ")
     );
 
-    let rows: Vec<(String, i32, bool, String, bool)> = conn
+    println!("SQL: {}", sql);
+    println!("PARAMS: {:?}", params);
+
+    let rows: Vec<(String, i32, bool, Option<String>, bool)> = conn
         // let rows: Vec<(String, i32)> = conn
         .exec(sql, params)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -120,8 +120,6 @@ GROUP BY b.kif_id
         gote_params.push(reversed_sfen.into());
     }
 
-    // gote_where_clauses.push("h.gote_player = ?".to_string());
-    // gote_params.push(MY_USERNAME_WARS.to_string().into());
     gote_where_clauses.push(format!(
         "h.gote_player IN ({})",
         MY_USERNAMES
@@ -132,11 +130,11 @@ GROUP BY b.kif_id
     ));
     gote_params.extend(MY_USERNAMES.iter().cloned().map(Value::from));
 
-    let gote_where_sql = if gote_where_clauses.is_empty() {
-        "1".to_string()
-    } else {
-        gote_where_clauses.join(" AND ")
-    };
+    // let gote_where_sql = if gote_where_clauses.is_empty() {
+    //     "1".to_string()
+    // } else {
+    //     gote_where_clauses.join(" AND ")
+    // };
 
     let gote_sql = format!(
         r#"
@@ -146,11 +144,12 @@ LEFT JOIN kif_headers h ON b.kif_id = h.id
 WHERE {}
 GROUP BY b.kif_id
 "#,
-        gote_where_sql
+        gote_where_clauses.join(" AND ")
     );
     println!("SQL: {}", gote_sql);
+    println!("PARAMS: {:?}", gote_params);
 
-    let gote_rows: Vec<(String, i32, bool, String, bool)> = conn
+    let gote_rows: Vec<(String, i32, bool, Option<String>, bool)> = conn
         .exec(gote_sql, gote_params)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
