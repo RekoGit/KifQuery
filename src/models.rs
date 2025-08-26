@@ -3,8 +3,8 @@ pub struct KifHeader {
     pub sente_player: String,
     pub gote_player: String,
     pub is_sente_win: bool,
-    pub started_at: Option<String>, // 追加（Optionalにしておくと柔軟）
-    pub ended_at: Option<String>,   // 追加
+    pub started_at: Option<String>,
+    pub ended_at: Option<String>,
     pub created_at: String,
     pub created_by: String,
 }

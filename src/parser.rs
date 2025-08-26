@@ -36,6 +36,7 @@ pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
 
     // 終局情報の検出
     let mut is_sente_win = true;
+    let mut is_resutl_found = false;
     let mut prev_line: Option<String> = None;
 
     // 棋譜が変化を含む場合があるため、先頭から走査して最初に「投了」や「反則手」が出てくる行を探す
@@ -46,7 +47,7 @@ pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
                 "反則手や時間切れの直前の行: {}",
                 prev_line.as_deref().unwrap_or("なし")
             );
-            if let Some(last) = prev_line {
+            if let Some(last) = prev_line.as_ref() {
                 if let Some((num_str, _)) = last.trim().split_once(char::is_whitespace) {
                     if let Ok(num) = num_str.parse::<u32>() {
                         print!("終局: {} {}手目", line, num);
@@ -56,7 +57,7 @@ pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
                         } else {
                             is_sente_win = num % 2 == 0;
                         }
-
+                        is_resutl_found = true;
                         break;
                     }
                 }
@@ -69,6 +70,7 @@ pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
                     // 偶数手で投了なら、先手の勝ち
                     print!("投了手: {} ", rest);
                     is_sente_win = num % 2 == 0;
+                    is_resutl_found = true;
                     break;
                 }
             }
@@ -76,6 +78,21 @@ pub fn parse_header_and_result(kif_text: &str, filename: &str) -> KifHeader {
 
         // 直前のlineを保管
         prev_line = Some(line.to_string());
+    }
+
+    // この時点で勝敗が不明である場合は、最後の手を指した方を勝ちとする
+    if is_resutl_found == false {
+        if let Some(last) = prev_line.as_ref() {
+            if let Some((num_str, _)) = last.trim().split_once(char::is_whitespace) {
+                if let Ok(num) = num_str.parse::<u32>() {
+                    print!(
+                        "投了/反則等の終局情報が見つからないため、最後の手を指した方を勝ちとします： 最終手: {} ",
+                        last,
+                    );
+                    is_sente_win = num % 2 == 1;
+                }
+            }
+        }
     }
 
     KifHeader {
