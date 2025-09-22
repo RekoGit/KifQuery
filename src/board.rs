@@ -124,12 +124,13 @@ impl Board {
                     let from_x = 9 - from_file;
                     let from_y = from_rank - 1;
 
-                    let piece = self.squares[from_y as usize][from_x as usize]
-                        .ok_or("No piece at source")?;
-
-                    // 移動
-                    self.squares[from_y as usize][from_x as usize] = None;
-                    self.squares[to_y][to_x] = Some(piece);
+                    if let Some(piece) = self.squares[from_y as usize][from_x as usize] {
+                        // 移動
+                        self.squares[from_y as usize][from_x as usize] = None;
+                        self.squares[to_y][to_x] = Some(piece);
+                    } else {
+                        println!("警告: 移動元に駒がありません ({} , {})", from_x, from_y);
+                    }
 
                     Ok(())
                 } else {
